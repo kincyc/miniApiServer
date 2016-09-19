@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# python 2.6 for legacy software compat reasons
+
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 import random
 import os
