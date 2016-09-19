@@ -45,6 +45,10 @@ class myHandler(BaseHTTPRequestHandler):
 		
 			myJsonResponse[element] = data.strip()
 
+		myJsonResponse['headers'] = {}
+		for k in self.headers:
+			myJsonResponse['headers'][k] =  self.headers[k]
+		
 		print(myJsonResponse)
 		
 		# Send the html message
