@@ -8,6 +8,9 @@ import os
 import re
 import json
 import string
+import StringIO
+import gzip
+
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -25,7 +28,7 @@ if not options.silent:
 
 if not options.notext:
 	# we open a text file and convert and split it into lines	
-	lines = open('/usr/share/doc/vmware-tools/open_source_licenses.txt').read().splitlines()
+	lines = open('/usr/share/doc/python27-simplejson-3.6.5/LICENSE.txt').read().splitlines()
 	words = []
 	# compile regex for later
 	pattern = re.compile('[\W_]+')
@@ -40,37 +43,50 @@ if not options.notext:
 
 #This class will handles any incoming request, regardless of path submitted 
 class myHandler(BaseHTTPRequestHandler):
+	# protocol_version = 'HTTP/1.1'
+	
+	def gzipencode(self, content):
+		out = StringIO.StringIO()
+		f = gzip.GzipFile(fileobj=out, mode='w', compresslevel=5)
+		f.write(content)
+		f.close()
+		return out.getvalue()
 	
 	#Handler for the GET requests
 	def do_GET(self):
-		self.send_response(200)
-		self.send_header('Content-type','application/json')
-		self.end_headers()
-		
-		# build a json response out of the words
+
 		myJsonResponse = dict()
-		
+
+		# build a json response out of the words		
 		if not options.notext:
 			# if headers are turned off
 			for x in range(0,10):
 				element =random.choice(words)
 				data = ""
-				for x in range(0,random.randint(0,20)):	
+				for x in range(0,random.randint(25000,25001)):	
 					data = random.choice(words) + " " + data
 			
 				myJsonResponse[element] = data.strip()
+			
+		myTextResponse = self.gzipencode(json.dumps(myJsonResponse))
 
+		self.send_response(200)
+		self.send_header('Content-type','application/json')
+		self.send_header('Content-length',str(len(str(myTextResponse))))
+		self.send_header("Content-Encoding", "gzip")
 		if not options.noheaders:
 		# if random text is turned off
 			myJsonResponse['headers'] = {}
 			for k in self.headers:
 				myJsonResponse['headers'][k] =  self.headers[k]
+
+		self.end_headers()
 		
 		if not options.silent:
-			print(myJsonResponse)
+			print(myTextResponse)
 		
 		# Send the html message
-		self.wfile.write(json.dumps(myJsonResponse))
+		self.wfile.write(myTextResponse)
 
 	if options.silent:
 		# redefines log_message to silence output
